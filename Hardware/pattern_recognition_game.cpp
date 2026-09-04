@@ -46,10 +46,15 @@ int currentLevel = 1;
 int playIndex = 0;   // Tracks player's progress in the current sequence
 int cursorIndex = 4; // Starts at center tile (0-8 grid)
 
+// Event-driven rendering flag to prevent screen lag
+bool needsRedraw = true; 
+
+// ==========================================
 // ==========================================
 // 4. BUTTON DEBOUNCING LOGIC
 // ==========================================
-#define DEBOUNCE_DELAY 50
+// Increased to 200ms to act as a rate-limiter for human fingers
+#define DEBOUNCE_DELAY 200 
 
 struct Button {
   const uint8_t pin;
@@ -64,25 +69,22 @@ Button btnLeft   = {BTN_LEFT_PIN, HIGH, HIGH, 0};
 Button btnRight  = {BTN_RIGHT_PIN, HIGH, HIGH, 0};
 Button btnSelect = {BTN_SELECT_PIN, HIGH, HIGH, 0};
 
-// Non-blocking button check. Returns true ONLY on the falling edge (press).
+// "Rate-Limited" Button Check: Fires instantly, then locks out for 200ms
 bool isButtonPressed(Button &b) {
   bool pressed = false;
   int reading = digitalRead(b.pin);
   
-  if (reading != b.lastState) {
-    b.lastDebounceTime = millis();
-  }
-  
-  if ((millis() - b.lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (reading != b.state) {
-      b.state = reading;
-      // Button is pressed when LOW (assuming INPUT_PULLUP)
-      if (b.state == LOW) {
-        pressed = true;
-      }
+  // Detect the exact moment the button gets pushed down
+  if (reading == LOW && b.lastState == HIGH) {
+    
+    // Only register the press if the lockout period has expired
+    if ((millis() - b.lastDebounceTime) > DEBOUNCE_DELAY) {
+      pressed = true;
+      b.lastDebounceTime = millis(); // Reset the lockout timer
     }
   }
-  b.lastState = reading;
+  
+  b.lastState = reading; // Always track the physical state of the metal
   return pressed;
 }
 
@@ -107,7 +109,6 @@ void beepGameOver() {
 // 6. GRAPHICS HELPERS (128x64 Version)
 // ==========================================
 void drawGrid(int highlightedTile, bool showCursor) {
-  // Scaled for the rectangular 128x64 screen
   const int tileSize = 14;
   const int gap = 2;
   const int startX = 41;
@@ -121,9 +122,9 @@ void drawGrid(int highlightedTile, bool showCursor) {
 
     // Draw the tile itself
     if (i == highlightedTile) {
-      u8g2.drawBox(x, y, tileSize, tileSize); // Filled if active
+      u8g2.drawBox(x, y, tileSize, tileSize);
     } else {
-      u8g2.drawFrame(x, y, tileSize, tileSize); // Hollow if inactive
+      u8g2.drawFrame(x, y, tileSize, tileSize);
     }
 
     // Draw the player cursor
@@ -146,10 +147,8 @@ void setup() {
   pinMode(BTN_RIGHT_PIN, INPUT_PULLUP);
   pinMode(BTN_SELECT_PIN, INPUT_PULLUP);
 
-  // Seed RNG via floating analog pin
   randomSeed(analogRead(RANDOM_SEED_PIN));
-
-  // Init display
+  
   u8g2.begin();
 }
 
@@ -164,117 +163,123 @@ void loop() {
     // STATE: START SCREEN
     // ------------------------------------------------
     case STATE_START:
-      u8g2.clearBuffer();
-      u8g2.setFont(u8g2_font_ncenB08_tr);
-      
-      // Coordinates set for 128x64 screen
-      u8g2.drawStr(25, 25, "PATTERN RECALL");
-      u8g2.drawStr(30, 45, "[Press Select]");
-      u8g2.sendBuffer();
+      if (needsRedraw) {
+        u8g2.clearBuffer();
+        u8g2.setFont(u8g2_font_ncenB08_tr);
+        u8g2.drawStr(25, 25, "PATTERN RECALL");
+        u8g2.drawStr(30, 45, "[Press Select]");
+        u8g2.sendBuffer();
+        needsRedraw = false;
+      }
 
       if (isButtonPressed(btnSelect)) {
         currentLevel = 1;
-        sequence[0] = random(0, 9); // Generate first tile
-        cursorIndex = 4;            // Reset cursor to middle
+        sequence[0] = random(0, 9);
+        cursorIndex = 4;
         currentState = STATE_WATCH_PHASE;
-        delay(500); // Brief pause before starting sequence
+        needsRedraw = true;
+        delay(500); 
       }
       break;
 
     // ------------------------------------------------
-    // STATE: WATCH PHASE (ESP32 plays the pattern)
+    // STATE: WATCH PHASE
     // ------------------------------------------------
     case STATE_WATCH_PHASE:
-      // Note: We use blocking delay() here because inputs SHOULD be ignored
       for (int i = 0; i < currentLevel; i++) {
-        // 1. Show highlighted tile
+        // Show highlighted tile
         u8g2.clearBuffer();
         u8g2.setFont(u8g2_font_ncenB08_tr);
         u8g2.drawStr(0, 10, "Watch...");
         u8g2.setCursor(95, 10); u8g2.print("Lvl:"); u8g2.print(currentLevel);
         
-        drawGrid(sequence[i], false); // No cursor shown while watching
+        drawGrid(sequence[i], false);
         u8g2.sendBuffer();
         
         beepTile();
-        delay(400); // Duration the tile stays illuminated
+        delay(400);
 
-        // 2. Turn off highlight for the gap between tiles
+        // Turn off highlight for the gap between tiles
         u8g2.clearBuffer();
         u8g2.drawStr(0, 10, "Watch...");
         u8g2.setCursor(95, 10); u8g2.print("Lvl:"); u8g2.print(currentLevel);
         
-        drawGrid(-1, false); // -1 means nothing highlighted
+        drawGrid(-1, false); 
         u8g2.sendBuffer();
         
-        delay(200); // Gap duration
+        delay(200); 
       }
       
-      playIndex = 0; // Reset player progress for their turn
+      playIndex = 0; 
       currentState = STATE_PLAY_PHASE;
+      needsRedraw = true; // Queue a redraw for the play screen
       break;
 
     // ------------------------------------------------
-    // STATE: PLAY PHASE (Player inputs the pattern)
+    // STATE: PLAY PHASE
     // ------------------------------------------------
     case STATE_PLAY_PHASE:
-      // Render Screen
-      u8g2.clearBuffer();
-      u8g2.setFont(u8g2_font_ncenB08_tr);
-      u8g2.drawStr(0, 10, "Your Turn!");
-      u8g2.setCursor(95, 10); u8g2.print("Lvl:"); u8g2.print(currentLevel);
-      drawGrid(-1, true); // No tile filled, but show cursor
-      u8g2.sendBuffer();
+      // Only render if a button was pressed to move the cursor
+      if (needsRedraw) {
+        u8g2.clearBuffer();
+        u8g2.setFont(u8g2_font_ncenB08_tr);
+        u8g2.drawStr(0, 10, "Your Turn!");
+        u8g2.setCursor(95, 10); u8g2.print("Lvl:"); u8g2.print(currentLevel);
+        drawGrid(-1, true); 
+        u8g2.sendBuffer();
+        needsRedraw = false;
+      }
 
-      // Handle Input - D-Pad Constraints
+      // Handle Input - D-Pad
       if (isButtonPressed(btnUp) && cursorIndex > 2) {
         cursorIndex -= 3;
+        needsRedraw = true; // Tell the screen to update
       }
       if (isButtonPressed(btnDown) && cursorIndex < 6) {
         cursorIndex += 3;
+        needsRedraw = true;
       }
       if (isButtonPressed(btnLeft) && (cursorIndex % 3) > 0) {
         cursorIndex -= 1;
+        needsRedraw = true;
       }
       if (isButtonPressed(btnRight) && (cursorIndex % 3) < 2) {
         cursorIndex += 1;
+        needsRedraw = true;
       }
 
       // Handle Input - Selection
       if (isButtonPressed(btnSelect)) {
-        // Visual & audio feedback of player's press
+        // Visual confirmation
         u8g2.clearBuffer();
         u8g2.drawStr(0, 10, "Your Turn!");
         u8g2.setCursor(95, 10); u8g2.print("Lvl:"); u8g2.print(currentLevel);
-        drawGrid(cursorIndex, true); // Fill selected tile
+        drawGrid(cursorIndex, true); 
         u8g2.sendBuffer();
         
         beepTile();
-        delay(200); // Brief visual confirmation pause
+        delay(200); 
 
         // Game Logic Evaluation
         if (cursorIndex == sequence[playIndex]) {
-          // Correct tile selected!
           playIndex++;
           
           if (playIndex == currentLevel) {
-            // Level completed successfully!
             beepSuccess();
             delay(300);
             
-            // Advance level
             if (currentLevel < MAX_LEVEL) {
-              sequence[currentLevel] = random(0, 9); // Add new step
+              sequence[currentLevel] = random(0, 9); 
               currentLevel++;
             }
             currentState = STATE_WATCH_PHASE;
-            delay(500); // Pause before next sequence
+            delay(500); 
           }
         } else {
-          // Wrong tile selected!
           beepGameOver();
           currentState = STATE_GAME_OVER;
         }
+        needsRedraw = true;
       }
       break;
 
@@ -282,21 +287,22 @@ void loop() {
     // STATE: GAME OVER
     // ------------------------------------------------
     case STATE_GAME_OVER:
-      u8g2.clearBuffer();
-      u8g2.setFont(u8g2_font_ncenB08_tr);
-      
-      // Coordinates set for 128x64 screen
-      u8g2.drawStr(30, 25, "GAME OVER!");
-      
-      u8g2.setCursor(20, 45);
-      u8g2.print("Reached Lvl: ");
-      u8g2.print(currentLevel);
-      
-      u8g2.sendBuffer();
+      if (needsRedraw) {
+        u8g2.clearBuffer();
+        u8g2.setFont(u8g2_font_ncenB08_tr);
+        u8g2.drawStr(30, 25, "GAME OVER!");
+        
+        u8g2.setCursor(20, 45);
+        u8g2.print("Reached Lvl: ");
+        u8g2.print(currentLevel);
+        
+        u8g2.sendBuffer();
+        needsRedraw = false;
+      }
 
-      // Wait for select to restart the game loop
       if (isButtonPressed(btnSelect)) {
         currentState = STATE_START;
+        needsRedraw = true;
       }
       break;
   }
