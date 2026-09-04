@@ -10,14 +10,14 @@
 #define OLED_SCL 22
 
 // D-Pad and Select Buttons (Mapped to your specific Wokwi layout)
-#define BTN_UP_PIN     32 // btn1
-#define BTN_DOWN_PIN   27 // btn3
+#define BTN_UP_PIN     18 // btn1
+#define BTN_DOWN_PIN   23 // btn3
 #define BTN_LEFT_PIN   26 // btn4
-#define BTN_RIGHT_PIN  25 // btn2
-#define BTN_SELECT_PIN 33 // btn5 (Center)
+#define BTN_RIGHT_PIN  27 // btn2
+#define BTN_SELECT_PIN 19 // btn5 (Center)
 
 // Passive Buzzer Pin
-#define BUZZER_PIN     12
+#define BUZZER_PIN     25
 
 // Unconnected analog pin for random seed
 #define RANDOM_SEED_PIN 34 
@@ -166,7 +166,7 @@ void loop() {
       if (needsRedraw) {
         u8g2.clearBuffer();
         u8g2.setFont(u8g2_font_ncenB08_tr);
-        u8g2.drawStr(25, 25, "PATTERN RECALL");
+        u8g2.drawStr(15, 25, "PATTERN RECALL");
         u8g2.drawStr(30, 45, "[Press Select]");
         u8g2.sendBuffer();
         needsRedraw = false;
