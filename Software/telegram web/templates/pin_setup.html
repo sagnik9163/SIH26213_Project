@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set Up Caregiver PIN</title>
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --card: #fffcf7;
+      --text: #2c2a26;
+      --muted: #6b6560;
+      --primary: #4a7c6f;
+      --primary-dark: #3a6459;
+      --error: #b85c5c;
+      --error-soft: #f8e8e8;
+      --border: #e0d9cf;
+      --shadow: 0 4px 18px rgba(44, 42, 38, 0.06);
+      --radius: 16px;
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: linear-gradient(165deg, #eef5f1 0%, #f7f5f0 45%, #faf6f0 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem 1.75rem;
+      width: min(380px, 100%);
+      text-align: center;
+    }
+    h1 { font-size: 1.4rem; color: var(--primary-dark); margin-bottom: 0.4rem; }
+    p.subtitle { color: var(--muted); font-size: 0.92rem; margin-bottom: 1.5rem; }
+    label {
+      display: block;
+      text-align: left;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      margin-top: 1rem;
+    }
+    label:first-of-type { margin-top: 0; }
+    .pin-input {
+      width: 100%;
+      letter-spacing: 0.6rem;
+      font-size: 1.5rem;
+      text-align: center;
+      font-weight: 700;
+      padding: 0.75rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+    .pin-input:focus { outline: none; border-color: var(--primary); }
+    .field-error {
+      color: var(--error);
+      background: var(--error-soft);
+      border-radius: 8px;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      margin-top: 0.9rem;
+    }
+    button {
+      margin-top: 1.4rem;
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button:hover { background: var(--primary-dark); }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Welcome — Set Up Your PIN</h1>
+    <p class="subtitle">Choose a 4-digit PIN. You'll enter this each time you open the dashboard.</p>
+    <form method="POST" action="/caregiver/setup">
+      <label for="pin">Choose a PIN</label>
+      <input type="tel" inputmode="numeric" maxlength="4" name="pin" id="pin"
+             class="pin-input" placeholder="••••" autocomplete="off" autofocus required>
+
+      <label for="confirm">Confirm PIN</label>
+      <input type="tel" inputmode="numeric" maxlength="4" name="confirm" id="confirm"
+             class="pin-input" placeholder="••••" autocomplete="off" required>
+
+      <button type="submit">Create PIN</button>
+    </form>
+    {% if error %}
+      <div class="field-error">{{ error }}</div>
+    {% endif %}
+  </div>
+</body>
+</html>

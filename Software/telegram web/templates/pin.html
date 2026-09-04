@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caregiver Login</title>
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --card: #fffcf7;
+      --text: #2c2a26;
+      --muted: #6b6560;
+      --primary: #4a7c6f;
+      --primary-dark: #3a6459;
+      --primary-soft: #e4efe9;
+      --error: #b85c5c;
+      --error-soft: #f8e8e8;
+      --border: #e0d9cf;
+      --shadow: 0 4px 18px rgba(44, 42, 38, 0.06);
+      --radius: 16px;
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: linear-gradient(165deg, #eef5f1 0%, #f7f5f0 45%, #faf6f0 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem 1.75rem;
+      width: min(360px, 100%);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: var(--primary-dark);
+      margin-bottom: 0.4rem;
+    }
+    p.subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+    .pin-input {
+      width: 100%;
+      letter-spacing: 0.6rem;
+      font-size: 1.6rem;
+      text-align: center;
+      font-weight: 700;
+      padding: 0.8rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+    .pin-input:focus { outline: none; border-color: var(--primary); }
+    .field-error {
+      color: var(--error);
+      background: var(--error-soft);
+      border-radius: 8px;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      margin-top: 0.9rem;
+    }
+    button {
+      margin-top: 1.25rem;
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    button:hover { background: var(--primary-dark); }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Caregiver Login</h1>
+    <p class="subtitle">Enter your PIN to manage reminders.</p>
+    <form method="POST" action="/caregiver/login">
+      <input type="tel" inputmode="numeric" maxlength="4" name="pin"
+             class="pin-input" placeholder="••••" autocomplete="off" autofocus required>
+      <button type="submit">Unlock</button>
+    </form>
+    {% if error %}
+      <div class="field-error">{{ error }}</div>
+    {% endif %}
+  </div>
+</body>
+</html>

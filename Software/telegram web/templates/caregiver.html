@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caregiver Dashboard</title>
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --bg-warm: #faf8f4;
+      --card: #fffcf7;
+      --text: #2c2a26;
+      --muted: #6b6560;
+      --primary: #4a7c6f;
+      --primary-soft: #e4efe9;
+      --primary-dark: #3a6459;
+      --accent: #c4895a;
+      --accent-soft: #f5ebe0;
+      --success: #4a8f6a;
+      --success-soft: #e4f2ea;
+      --error: #b85c5c;
+      --error-soft: #f8e8e8;
+      --border: #e0d9cf;
+      --shadow: 0 4px 18px rgba(44, 42, 38, 0.06);
+      --radius: 16px;
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: 1.25rem;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .header h1 { font-size: 1.5rem; color: var(--primary-dark); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-ghost:hover { background: var(--bg-warm); }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .manage-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem;
+    }
+    .manage-block h2 {
+      font-size: 1.1rem;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+    }
+
+    .manage-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.1rem;
+    }
+    .manage-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--bg-warm);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.95rem;
+    }
+    .manage-list .m-time {
+      color: var(--primary-dark);
+      font-weight: 700;
+      min-width: 4.2rem;
+    }
+    .manage-list .m-main { flex: 1; }
+    .manage-list .m-sub { color: var(--muted); font-size: 0.8rem; }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0.2rem 0.4rem;
+      line-height: 1;
+    }
+    .icon-btn:hover { color: var(--error); }
+    .empty-mini { color: var(--muted); font-size: 0.9rem; padding: 0.4rem 0; }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      margin-top: 0.9rem;
+    }
+    label:first-of-type { margin-top: 0; }
+    input[type="time"], textarea {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+    input[type="time"]:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    textarea { min-height: 80px; resize: vertical; }
+
+    .btn-primary {
+      margin-top: 1.1rem;
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.85rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .result {
+      margin-top: 1rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      font-size: 0.92rem;
+    }
+    .result.ok { background: var(--success-soft); color: var(--success); }
+    .result.fail { background: var(--error-soft); color: var(--error); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>Caregiver Dashboard</h1>
+      <form method="POST" action="/caregiver/logout">
+        <button type="submit" class="btn-ghost">Log out</button>
+      </form>
+    </div>
+    <p class="note">Set a reminder below — it's sent straight to the patient's device.</p>
+
+    <div class="manage-block">
+      <h2>Set a new reminder</h2>
+      <form method="POST" action="/caregiver/add">
+        <label for="reminder_time">Time</label>
+        <input type="time" id="reminder_time" name="reminder_time" required>
+
+        <label for="reminder_message">Reminder message</label>
+        <textarea id="reminder_message" name="reminder_message"
+                  placeholder="e.g. Take your blood pressure medicine" required></textarea>
+
+        <button type="submit" class="btn-primary">Set Reminder</button>
+      </form>
+
+      {% if result %}
+        <div class="result {{ 'ok' if result.ok else 'fail' }}">{{ result.info }}</div>
+      {% endif %}
+    </div>
+
+    <div class="manage-block">
+      <h2>Reminders sent from this dashboard</h2>
+      <p class="note" style="margin-bottom: 1rem;">
+        This is a record of what's been sent, not a live view of the device's schedule.
+        Removing one here only removes it from this list.
+      </p>
+      <ul class="manage-list">
+        {% for r in reminders %}
+          <li>
+            <span class="m-time">{{ r["reminder_time"] }}</span>
+            <span class="m-main">{{ r["message"] }}</span>
+            <form method="POST" action="/caregiver/delete/{{ r['id'] }}" style="display:inline;">
+              <button type="submit" class="icon-btn" title="Remove from this list">&times;</button>
+            </form>
+          </li>
+        {% else %}
+          <li class="empty-mini">No reminders sent yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="manage-block">
+      <h2>Change PIN</h2>
+      <form method="POST" action="/caregiver/change-pin">
+        <label for="current_pin">Current PIN</label>
+        <input type="tel" inputmode="numeric" maxlength="4" name="current_pin" id="current_pin" required
+               style="letter-spacing:0.4rem; text-align:center; font-weight:700;">
+
+        <label for="new_pin">New PIN</label>
+        <input type="tel" inputmode="numeric" maxlength="4" name="new_pin" id="new_pin" required
+               style="letter-spacing:0.4rem; text-align:center; font-weight:700;">
+
+        <label for="confirm_pin">Confirm new PIN</label>
+        <input type="tel" inputmode="numeric" maxlength="4" name="confirm_pin" id="confirm_pin" required
+               style="letter-spacing:0.4rem; text-align:center; font-weight:700;">
+
+        <button type="submit" class="btn-primary">Update PIN</button>
+      </form>
+      {% if pin_result %}
+        <div class="result {{ 'ok' if pin_result.ok else 'fail' }}">{{ pin_result.info }}</div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
