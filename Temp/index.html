@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Telegram Relay Dashboard</title>
+    <!-- Auto-refresh the page every 5 seconds so new messages show up
+         without you having to manually reload. -->
+    <meta http-equiv="refresh" content="5">
+    <style>
+        body {
+            font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+            background: #0f1115;
+            color: #e6e6e6;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            font-size: 20px;
+            border-bottom: 1px solid #2a2d34;
+            padding-bottom: 12px;
+        }
+        .count {
+            color: #8a8f98;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .message {
+            background: #1a1d24;
+            border: 1px solid #2a2d34;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .message .text {
+            font-size: 15px;
+            margin-bottom: 6px;
+            white-space: pre-wrap;
+        }
+        .message .time {
+            font-size: 12px;
+            color: #8a8f98;
+        }
+        .empty {
+            color: #8a8f98;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Telegram Relay Dashboard</h1>
+    <p><a href="/caregiver" style="color:#6ea8ff;">+ Open Caregiver Dashboard</a></p>
+    <div class="count">{{ messages|length }} message(s) received</div>
+
+    {% if messages %}
+        {% for msg in messages %}
+            <div class="message">
+                <div class="text">{{ msg["text"] }}</div>
+                <div class="time">{{ msg["received_at"] }}</div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty">No messages yet. Waiting for Bot2 to forward something...</p>
+    {% endif %}
+</body>
+</html>
